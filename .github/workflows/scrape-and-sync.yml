@@ -5,36 +5,40 @@ on:
     - cron: "5 10 * * *"
     - cron: "5 22 * * *"
   workflow_dispatch: {}
-
+ 
 jobs:
   scrape-and-sync:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+ 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
+ 
       - name: Install Moneyman's dependencies
         run: npm install
-
+ 
+      - name: Patch israeli-bank-scrapers to include pending transactions
+        run: node patch-israeli-bank-scrapers.mjs
+ 
       - name: Build Moneyman
         run: npm run build
-
+ 
       - name: Run the scraper
         env:
           MONEYMAN_CONFIG: ${{ secrets.MONEYMAN_CONFIG }}
         run: npm start
-
+ 
       - name: Install the Base44 SDK
         run: npm install @base44/sdk
-
+ 
       - name: Push transactions into Base44
         env:
           BASE44_APP_ID: ${{ secrets.BASE44_APP_ID }}
           BASE44_BOT_EMAIL: ${{ secrets.BASE44_BOT_EMAIL }}
           BASE44_BOT_PASSWORD: ${{ secrets.BASE44_BOT_PASSWORD }}
         run: node push-to-base44.mjs
+ 
